@@ -1,0 +1,17 @@
+{
+  "monthly_waste": [
+    { "month": "Jan", "organic": 4.5, "plastic": 1.2, "other": 0.5 },
+    { "month": "Feb", "organic": 5.2, "plastic": 1.4, "other": 0.6 },
+    { "month": "Mar", "organic": 6.1, "plastic": 1.1, "other": 0.4 },
+    { "month": "Apr", "organic": 5.8, "plastic": 1.3, "other": 0.7 },
+    { "month": "May", "organic": 7.2, "plastic": 1.5, "other": 0.5 },
+    { "month": "Jun", "organic": 8.5, "plastic": 1.8, "other": 0.8 }
+  ],
+  "waste_composition": [
+    { "type": "Fruits & Légumes", "value": 45 },
+    { "type": "Restes de repas", "value": 30 },
+    { "type": "Pain & Céréales", "value": 15 },
+    { "type": "Autre", "value": 10 }
+  ],
+  "total_collected_tons": 38.5
+}

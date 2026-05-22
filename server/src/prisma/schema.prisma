@@ -1,0 +1,319 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PROVIDER
+  FARMER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum CollectionPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum CollectionStatus {
+  REQUESTED
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum LotStatus {
+  DRAFT
+  READY
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ContainerStatus {
+  ONLINE
+  OFFLINE
+  MAINTENANCE
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum AlertSource {
+  WEATHER
+  SYSTEM
+  CONTAINER
+  MARKETPLACE
+  AI
+}
+
+enum TransportStatus {
+  WAITING
+  ON_THE_WAY
+  COMPLETED
+  DELAYED
+}
+
+model User {
+  id                Int               @id @default(autoincrement())
+  fullName          String            @map("full_name")
+  email             String            @unique
+  passwordHash      String?           @map("password_hash")
+  googleId          String?           @unique @map("google_id")
+  role              Role
+  preferredLanguage String            @default("fr") @map("preferred_language")
+  avatarUrl         String?           @map("avatar_url")
+  isVerified        Boolean           @default(false) @map("is_verified")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  farmerProfile     FarmerProfile?
+  providerProfile   ProviderProfile?
+  orders            Order[]
+  aiConversations   AIConversation[]
+  aiAnalyses        AIAnalysis[]
+  impactStats       ImpactStat[]
+  alerts            Alert[]
+
+  @@map("users")
+}
+
+model FarmerProfile {
+  id               Int               @id @default(autoincrement())
+  userId           Int               @unique @map("user_id")
+  farmName         String            @map("farm_name")
+  region           String?
+  city             String?
+  surfaceHectares  Float?            @map("surface_hectares")
+  climate          String?
+  mainCrops        String?           @map("main_crops")
+  equipment        String?           @db.Text
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weatherSnapshots WeatherSnapshot[]
+
+  @@map("farmer_profiles")
+}
+
+model ProviderProfile {
+  id                Int                 @id @default(autoincrement())
+  userId            Int                 @unique @map("user_id")
+  establishmentName String              @map("establishment_name")
+  city              String?
+  address           String?
+  contactPhone      String?             @map("contact_phone")
+  wasteType         String?             @map("waste_type")
+  logoUrl           String?             @map("logo_url")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  containers        Container[]
+  collectionRequests CollectionRequest[]
+  compostLots       CompostLot[]
+  transportUpdates  TransportUpdate[]
+
+  @@map("provider_profiles")
+}
+
+model Product {
+  id            Int        @id @default(autoincrement())
+  titleFr       String     @map("title_fr")
+  titleAr       String     @map("title_ar")
+  descriptionFr String     @map("description_fr")
+  descriptionAr String     @map("description_ar")
+  price         Decimal    @db.Decimal(10, 2)
+  stock         Int        @default(0)
+  qualityLevel  String     @map("quality_level")
+  imageUrl      String?    @map("image_url")
+  isActive      Boolean    @default(true) @map("is_active")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @default(now()) @updatedAt @map("updated_at")
+  orderItems    OrderItem[]
+
+  @@map("products")
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  userId      Int         @map("user_id")
+  totalAmount Decimal     @db.Decimal(10, 2) @map("total_amount")
+  status      OrderStatus @default(PENDING)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int      @map("order_id")
+  productId Int      @map("product_id")
+  quantity  Int
+  unitPrice Decimal  @db.Decimal(10, 2) @map("unit_price")
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@map("order_items")
+}
+
+model Container {
+  id            Int             @id @default(autoincrement())
+  providerId    Int             @map("provider_id")
+  name          String
+  location      String
+  capacityLiters Int            @map("capacity_liters")
+  fillLevel     Int             @default(0) @map("fill_level")
+  lastPickupAt  DateTime?       @map("last_pickup_at")
+  alertsCount   Int             @default(0) @map("alerts_count")
+  status        ContainerStatus @default(ONLINE)
+  createdAt     DateTime        @default(now()) @map("created_at")
+  provider      ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  requests      CollectionRequest[]
+  transportUpdates TransportUpdate[]
+
+  @@map("containers")
+}
+
+model CollectionRequest {
+  id             Int                @id @default(autoincrement())
+  providerId     Int                @map("provider_id")
+  containerId    Int?               @map("container_id")
+  priority       CollectionPriority @default(MEDIUM)
+  fillPercentage Int                @default(0) @map("fill_percentage")
+  city           String?
+  status         CollectionStatus   @default(REQUESTED)
+  requestedAt    DateTime           @default(now()) @map("requested_at")
+  provider       ProviderProfile    @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  container      Container?         @relation(fields: [containerId], references: [id], onDelete: SetNull)
+
+  @@map("collection_requests")
+}
+
+model CompostLot {
+  id           Int             @id @default(autoincrement())
+  providerId   Int             @map("provider_id")
+  lotCode      String          @unique @map("lot_code")
+  volume       Decimal         @db.Decimal(10, 2)
+  qualityScore Float?          @map("quality_score")
+  status       LotStatus       @default(DRAFT)
+  notes        String?
+  createdAt    DateTime        @default(now()) @map("created_at")
+  provider     ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@map("compost_lots")
+}
+
+model AIConversation {
+  id        Int         @id @default(autoincrement())
+  userId    Int         @map("user_id")
+  role      MessageRole
+  message   String      @db.Text
+  createdAt DateTime    @default(now()) @map("created_at")
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_conversations")
+}
+
+model AIAnalysis {
+  id           Int      @id @default(autoincrement())
+  userId        Int      @map("user_id")
+  analysisType  String   @map("analysis_type")
+  imageUrl      String?  @map("image_url")
+  resultJson    Json     @map("result_json")
+  createdAt     DateTime @default(now()) @map("created_at")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_analyses")
+}
+
+model ImpactStat {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @map("user_id")
+  co2Saved        Float    @default(0) @map("co2_saved")
+  treesEquivalent Int      @default(0) @map("trees_equivalent")
+  performanceRate Float    @default(0) @map("performance_rate")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("impact_stats")
+}
+
+model TransportUpdate {
+  id              Int             @id @default(autoincrement())
+  providerId      Int             @map("provider_id")
+  containerId      Int?           @map("container_id")
+  etaMinutes      Int?            @map("eta_minutes")
+  transportStatus TransportStatus @default(WAITING) @map("transport_status")
+  assignedTruck   String?         @map("assigned_truck")
+  note            String?         @db.Text
+  updatedAt       DateTime        @default(now()) @map("updated_at")
+  provider        ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  container       Container?      @relation(fields: [containerId], references: [id], onDelete: SetNull)
+
+  @@map("transport_updates")
+}
+
+model WeatherSnapshot {
+  id              Int           @id @default(autoincrement())
+  farmerProfileId Int           @map("farmer_profile_id")
+  condition       String
+  temperature     Float
+  humidity        Int
+  windSpeed       Float?        @map("wind_speed")
+  rainChance      Int?          @map("rain_chance")
+  recordedAt      DateTime      @default(now()) @map("recorded_at")
+  farmerProfile   FarmerProfile @relation(fields: [farmerProfileId], references: [id], onDelete: Cascade)
+
+  @@map("weather_snapshots")
+}
+
+model Alert {
+  id         Int           @id @default(autoincrement())
+  userId     Int           @map("user_id")
+  title      String
+  message    String        @db.Text
+  severity   AlertSeverity @default(INFO)
+  source     AlertSource   @default(SYSTEM)
+  isActive   Boolean       @default(true) @map("is_active")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("alerts")
+}
+
+// Stores every sensor reading sent by the Arduino over USB serial.
+// containerId is stored as a plain reference (no FK constraint to avoid MariaDB conflicts).
+model BinReading {
+  id           Int      @id @default(autoincrement())
+  containerId  Int?     @map("container_id")  // plain reference, no FK constraint
+  temperature  Float
+  humidity     Float
+  distanceCm   Float    @map("distance_cm")
+  fillPercent  Int      @map("fill_percent")
+  waterPercent Int      @map("water_percent")
+  status       String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("bin_readings")
+}
