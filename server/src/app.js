@@ -9,15 +9,19 @@ const errorMiddleware = require("./middlewares/errorMiddleware");
 const notFoundMiddleware = require("./middlewares/notFoundMiddleware");
 
 const app = express();
+const allowedOrigins = [
+  env.clientUrl,
+  ...(env.nodeEnv === "production"
+    ? []
+    : ["http://localhost:5173", "http://127.0.0.1:5173"])
+].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl)
       if (!origin) return callback(null, true);
-      
-      const allowedOrigins = [env.clientUrl, "http://localhost:5173", "http://127.0.0.1:5173"];
-      
+
       if (allowedOrigins.includes(origin) || env.nodeEnv === "development") {
         callback(null, true);
       } else {
