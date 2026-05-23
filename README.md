@@ -1,4 +1,4 @@
-# 🌿 Green Sahara - Gestion Circulaire : <link to="https://green-sahara-client.vercel.app/"></link>
+# 🌿 Green Sahara - Gestion Circulaire : [link to WebApp](https://green-sahara-client.vercel.app/)
 
 <p align="center">
   <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
