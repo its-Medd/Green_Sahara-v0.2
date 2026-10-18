@@ -12,21 +12,8 @@
 
 ## 📖 Présentation
 
-**Green Sahara** est une plateforme web de gestion circulaire connectant les **générateurs de déchets (Providers)** et les **agriculteurs (Farmers)** pour valoriser les déchets organiques. Elle intègre l'IA Google Gemini pour l'analyse et l'aide à la décision.
-
-Interface bilingue **Français/Arabe** avec support complet **RTL**.
-
----
-
-## 🚀 Démarrage Rapide
-
-```bash
-npm install
-npm run install:all
-npm run dev
-```
-
-Accessible sur `http://localhost:5173`
+**Green Sahara** is a circular management web platform connecting waste generators (Providers)** and farmers to recover organic waste. It integrates Google Gemini AI for analysis and decision support. 
+Bilingual interface **French/Arabic** with full support **RTL**.
 
 ---
 
@@ -76,7 +63,3 @@ green-sahara/
 | Auth | JWT + Google OAuth 2.0 |
 
 ---
-
-## 📝 Licence
-
-MIT — Réalisé avec ❤️ pour un futur plus vert. 🌍
